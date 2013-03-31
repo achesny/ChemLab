@@ -1,8 +1,5 @@
 package mod.chemlab.common;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.Item;
@@ -13,13 +10,12 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraftforge.common.ForgeDirection;
 import net.minecraftforge.common.ISidedInventory;
 
-public class TileEntityAtomFuser extends TileEntity implements IInventory {
+public class TileEntityAtomSplitter extends TileEntity implements IInventory {
 
 	private ItemStack[] inventory;
-	private IInventory craftResult;
 
-	public TileEntityAtomFuser() {
-		inventory = new ItemStack[10];
+	public TileEntityAtomSplitter() {
+		inventory = new ItemStack[4];
 	}
 
 	@Override
@@ -78,7 +74,7 @@ public class TileEntityAtomFuser extends TileEntity implements IInventory {
 
 	@Override
 	public String getInvName() {
-		return "container.atom_fuser";
+		return "container.atom_splitter";
 	}
 
 	@Override
@@ -135,53 +131,29 @@ public class TileEntityAtomFuser extends TileEntity implements IInventory {
 
 	@Override
 	public void updateEntity() {
-		fuseItem();
+		splitItem();
 	}
 
-	private boolean canFuse() {
-		if (inventory[0] == null || !inventory[0].isItemEqual(new ItemStack(ChemLab.proton))) {
+	private boolean canSplit() {
+		if (inventory[0] == null || inventory[1] != null || inventory[2] != null || inventory[3] != null) {
 			return false;
+		} else {
+			return true;
 		}
-		if (inventory[1] != null && !inventory[1].isItemEqual(new ItemStack(ChemLab.nuetron))) {
-			return false;
-		}
-		for (int i=0;i<6;i++) {
-			if (inventory[2+i] != null && !inventory[2+i].isItemEqual(new ItemStack(ChemLab.electron))) {
-				return false;
-			}
-		}
-		return true;
 	}
 
-	private void fuseItem() {
-		FuserRecipes recipes = ChemLab.getFuserRecipes();
-		if (canFuse()) {
-			List<Integer> electrons = new ArrayList<Integer>();
-			for (int i=0;i<6;i++) {
-				if (inventory[2+i] != null && inventory[2+i].stackSize > 0) {
-					electrons.add(inventory[2+i].stackSize);
-				}
-			}
-			
-			int nuetrons = 0;
-			if (inventory[1] != null) {
-				nuetrons = inventory[1].stackSize;
-			}
-			AtomRecipe atomRecipe = new AtomRecipe(null, inventory[0].stackSize, nuetrons, (Integer[])electrons.toArray(new Integer[0]));
-			Item itemForRecipe = recipes.getItemForRecipe(atomRecipe);
-			if (itemForRecipe != null) {
-				ItemStack outputItem = new ItemStack(itemForRecipe);
-				if (outputItem != null && inventory[9] == null) {
-					craftResult.setInventorySlotContents(0, outputItem.copy());
-				} 
-			} else {
-				craftResult.setInventorySlotContents(0, null);
+	private void splitItem() {
+		if (canSplit()) {
+			this.inventory[1] = new ItemStack(ChemLab.proton, 64);
+			this.inventory[2] = new ItemStack(ChemLab.nuetron, 64);
+			this.inventory[3] = new ItemStack(ChemLab.electron, 64);
+
+			--this.inventory[0].stackSize;
+
+			if (this.inventory[0].stackSize <= 0) {
+				this.inventory[0] = null;
 			}
 		}
-	}
-	
-	public void setCraftResult(IInventory craftResult) {
-		this.craftResult = craftResult;
 	}
 
 	@Override
